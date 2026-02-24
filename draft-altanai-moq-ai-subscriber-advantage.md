@@ -2,7 +2,7 @@
 title: "Detecting AI-Driven Subscriber Advantage in Media over QUIC (MOQ)"
 abbrev: "MOQ AI Subscriber Advantage"
 category: info
-docname: draft-altanai-moq-ai-subscriber-advantage-00
+docname: draft-altanai-moq-ai-subscriber-advantage-latest
 submissiontype: IETF
 date: 2026-02-10
 consensus: false
