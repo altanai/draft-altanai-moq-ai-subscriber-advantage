@@ -1,0 +1,323 @@
+
+
+
+
+Network Working Group                                           A. Bisht
+Internet-Draft                                                     Cisco
+Intended status: Informational                          10 February 2026
+Expires: 14 August 2026
+
+
+   Detecting AI-Driven Subscriber Advantage in Media over QUIC (MOQ)
+              draft-altanai-moq-ai-subscriber-advantage-00
+
+Abstract
+
+   This document describes the problem of unfair advantage that AI-
+   driven participants may obtain in Media over QUIC (MOQ) groups, and
+   outlines a scope for detecting such behavior in a privacy-preserving
+   manner.  It defines no protocol changes and is intended to inform
+   future work in the MOQ and AI Preferences (AIPREF) working groups.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 14 August 2026.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+   2.  Motivation
+   3.  Problem Statement
+   4.  Scope
+     4.1.  In Scope
+     4.2.  Out of Scope
+   5.  Observable Signals for Detection
+   6.  Relationship to Other Work
+   7.  Security and Privacy Considerations
+   8.  IANA Considerations
+   9.  References
+     9.1.  Normative References
+     9.2.  Informative References
+   Appendix A.  References
+     A.1.  Normative References
+     A.2.  Informative References
+   Author's Address
+
+1.  Introduction
+
+   Media over QUIC Transport (MOQT) [MoQTransport] enables publish/
+   subscribe distribution of media over QUIC with relays, multiple
+   subscribers, and prioritization.  As endpoints may use AI to optimize
+   subscription strategy, track selection, or join/leave timing, the
+   possibility arises that AI-driven behavior obtains systematically
+   better quality of experience or relay resources than non-AI or less
+   aggressive endpoints — an "unfair AI advantage."
+
+   Operators and relay providers may wish to *detect* when observed
+   behavior is consistent with such advantage, for capacity planning,
+   fairness policy, or transparency, while respecting privacy.  This
+   document provides a short problem statement and scope for that
+   detection, and relates it to existing MOQ and AI preference work.
+
+2.  Motivation
+
+   Beyond unfairness to other subscribers, AI-enabled subscribers can
+   harm or stress CDN relay servers in several ways.  Detection of such
+   behavior benefits relay operators for capacity planning, abuse
+   mitigation, and service assurance.
+
+   *  *Resource exhaustion*: AI can learn to maximize cache hits,
+      bandwidth, or priority allocation.  When many AI subscribers
+      optimize selfishly, relay memory, CPU, and bandwidth can be
+      exhausted by a subset of subscribers.
+
+   *  *Subscription churn abuse*: AI can drive high rates of SUBSCRIBE,
+      UNSUBSCRIBE, and REQUEST_UPDATE to exploit cache warming,
+      scheduling, or priority handling.  Excessive churn increases relay
+      processing load and degrades scheduling effectiveness.
+
+   *  *Priority abuse*: AI can learn relay prioritization behavior and
+      time requests to consistently obtain higher priority.  At scale,
+      this forces the relay to process disproportionate high-priority
+      traffic and complicates fair scheduling.
+
+   *  *Cache exploitation*: AI can time requests to maximize cache hits
+      for itself while causing cache thrashing or eviction for others,
+      increasing cache load and bandwidth usage.
+
+   *  *Bandwidth monopolization*: AI can optimize the mix and timing of
+      FETCH vs SUBSCRIBE to consume a disproportionate share of relay
+      bandwidth, overloading egress capacity and degrading service for
+      all subscribers.
+
+   *  *Probing and discovery*: AI can probe relay behavior (scheduling,
+      cache, rate limits) to discover optimizations or weaknesses,
+      leading to patterns that stress the relay or exploit its design.
+
+   These harms motivate relay operators to detect behavior consistent
+   with unfair AI advantage, in addition to fairness concerns among
+   subscribers.
+
+3.  Problem Statement
+
+   In MOQ, subscribers subscribe to tracks and receive objects; they may
+   use REQUEST_UPDATE, priorities, and subscription filters.  Relays
+   forward objects based on subscription state and metadata.  If some
+   subscribers use AI to:
+
+   *  optimize which tracks they subscribe to and when they switch
+      (e.g., ABR),
+
+   *  time subscriptions and fetches to obtain lower latency or better
+      cache hit behavior, or
+
+   *  exploit prioritization or relay scheduling in ways that
+      disadvantage other subscribers,
+
+   then those subscribers may receive systematically better service.
+   That creates an *unfair AI advantage* relative to subscribers that do
+   not use such optimization.
+
+   Detection in this context means: identifying behavior patterns (from
+   relay- or transport-observable signals) that are consistent with such
+   advantage, without requiring access to payload or to whether an
+   endpoint is "AI" or "human."  This document does not define what
+   constitutes "fair" or "unfair" in a policy or legal sense.
+
+4.  Scope
+
+4.1.  In Scope
+
+   *  Problem statement for unfair AI advantage in MOQ groups (as
+      above).
+
+   *  *Observable signals* that could support detection: e.g.,
+      subscription rate, track-switch rate, join/leave timing relative
+      to group boundaries, use of priorities, and object-request
+      patterns.  These can be derived from relay-visible metadata (MOQT
+      does not encrypt metadata from relays).
+
+   *  *Privacy-preserving detection*: using aggregates, anonymized
+      identifiers, or preference-bound data exposure, consistent with
+      frameworks such as [AIPrefNetwork] (e.g., "Detecting Unfair
+      Bandwidth Usage" with limited identity and retention).
+
+   *  Relationship to MOQT (tracks, namespaces, subscribe/fetch, relay
+      behavior) and to metrics work (e.g., [MoQMetrics]).
+
+4.2.  Out of Scope
+
+   *  Defining legal or policy meaning of "fair" or "unfair."
+
+   *  Standardizing specific ML algorithms or detection logic.
+
+   *  Protocol changes to MOQT for enforcement or remediation.
+
+   *  Authentication or attestation of "AI" vs "non-AI" endpoints.
+
+5.  Observable Signals for Detection
+
+   The following are candidate signals that relays or analysis systems
+   could use (in aggregate and with appropriate privacy controls) to
+   detect behavior consistent with unfair advantage.  They are
+   informative only.
+
+   +==============+===============================+===================+
+   | Signal       | Description                   | Privacy           |
+   |              |                               | consideration     |
+   +==============+===============================+===================+
+   | Subscription | Rate of SUBSCRIBE /           | Aggregate by      |
+   | churn        | UNSUBSCRIBE / REQUEST_UPDATE  | namespace or      |
+   |              | per endpoint or per track     | anonymized ID     |
+   +--------------+-------------------------------+-------------------+
+   | Track-switch | Timing of subscription        | No payload;       |
+   | timing       | changes relative to group     | metadata only     |
+   |              | boundaries or catalog updates |                   |
+   +--------------+-------------------------------+-------------------+
+   | Priority     | Use of priority values across | Aggregate         |
+   | distribution | subscriptions per endpoint    |                   |
+   +--------------+-------------------------------+-------------------+
+   | Object       | FETCH vs SUBSCRIBE mix, and   | Relay already has |
+   | request      | request timing                | this; restrict    |
+   | pattern      |                               | retention and     |
+   |              |                               | identity          |
+   +--------------+-------------------------------+-------------------+
+   | Join latency | Time from track availability  | Per-endpoint only |
+   |              | to first subscription from an | with consent or   |
+   |              | endpoint                      | anonymized        |
+   +--------------+-------------------------------+-------------------+
+
+                                 Table 1
+
+   Detection mechanisms SHOULD respect preference frameworks (e.g.,
+   AIPREF) for what data is exposed to AI or analytics systems and at
+   what granularity.
+
+6.  Relationship to Other Work
+
+   *  *MOQ Transport* [MoQTransport]: Provides the data model (tracks,
+      groups, objects), subscription lifecycle, and relay behavior.
+      Detection builds on relay-visible metadata and existing control
+      messages.
+
+   *  *Metrics over MOQT* [MoQMetrics]: Defines metrics for MOQT;
+      extension for fairness-related metrics (e.g., per-subscriber or
+      per-namespace aggregates) could align with this problem.
+
+   *  *AI Preferences (AIPREF)* [AIPrefNetwork]: Defines preferences for
+      AI processing of network traffic, including "unfair usage
+      patterns" and "Detecting Unfair Bandwidth Usage."  MOQ traffic is
+      one application; preferences for what MOQ metadata AI may use for
+      fairness detection could be expressed with the same vocabulary.
+
+7.  Security and Privacy Considerations
+
+   Detection that uses per-endpoint or per-subscription data can reveal
+   behavior patterns and potentially identity.  Implementations SHOULD
+   use aggregation, anonymization, and minimal retention.  Preference
+   expression (e.g., AIPREF) allows users and operators to bound what
+   data is exposed to AI systems.  This document does not introduce new
+   protocol mechanisms and does not change MOQT or QUIC security
+   properties.
+
+8.  IANA Considerations
+
+   This document has no IANA actions.
+
+9.  References
+
+9.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+9.2.  Informative References
+
+   [AIPrefNetwork]
+              Bisht, A., "AI Preferences for Privacy-Preserving Network
+              Traffic Analysis", 2025,
+              <https://datatracker.ietf.org/doc/draft-aipref-network-
+              privacy-control/>.
+
+   [MoQMetrics]
+              Jennings, C., "Metrics over MOQT", 2025,
+              <https://datatracker.ietf.org/doc/draft-jennings-moq-
+              metrics/>.
+
+   [MoQTransport]
+              IETF MOQ WG, "Media over QUIC Transport", 2026,
+              <https://datatracker.ietf.org/doc/draft-ietf-moq-
+              transport/>.
+
+Appendix A.  References
+
+A.1.  Normative References
+
+   [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+   Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March
+   1997, https://www.rfc-editor.org/rfc/rfc2119 (https://www.rfc-
+   editor.org/rfc/rfc2119).
+
+   [RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119
+   Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174, May 2017,
+   https://www.rfc-editor.org/rfc/rfc8174 (https://www.rfc-
+   editor.org/rfc/rfc8174).
+
+A.2.  Informative References
+
+   [MoQTransport] Nandakumar, S., Vasiliev, V., Swett, I., and A.
+   Frindell, "Media over QUIC Transport", Work in Progress, Internet-
+   Draft, draft-ietf-moq-transport-16, January 2026,
+   https://datatracker.ietf.org/doc/draft-ietf-moq-transport/
+   (https://datatracker.ietf.org/doc/draft-ietf-moq-transport/).
+
+   [MoQMetrics] Jennings, C., "Metrics over MOQT", Work in Progress,
+   Internet-Draft, draft-jennings-moq-metrics-02, October 2025,
+   https://datatracker.ietf.org/doc/draft-jennings-moq-metrics/
+   (https://datatracker.ietf.org/doc/draft-jennings-moq-metrics/).
+
+   [AIPrefNetwork] Bisht, A., "AI Preferences for Privacy-Preserving
+   Network Traffic Analysis", Work in Progress, Internet-Draft, draft-
+   aipref-network-privacy-control-00, https://datatracker.ietf.org/doc/
+   draft-aipref-network-privacy-control/
+   (https://datatracker.ietf.org/doc/draft-aipref-network-privacy-
+   control/).
+
+Author's Address
+
+   Altanai Bisht
+   Cisco
+   Email: altanai@outlook.com
