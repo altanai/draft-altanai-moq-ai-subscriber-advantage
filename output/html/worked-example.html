@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An illustrative, privacy-conscious example of comparing subscriber resource use and service outcomes at a MoQ relay.">
+  <title>Worked Example — Subscriber Advantage in MoQ</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <div class="topline"></div>
+  <div class="wrap">
+    <header>
+      <nav class="nav" aria-label="Main navigation">
+        <div class="brand">MoQ · Fairness · Privacy</div>
+        <div class="navlinks">
+          <a href="proposal-overview.html">← Proposal overview</a>
+          <a href="#cohort">Cohort</a>
+          <a href="#decision">Interpretation</a>
+          <a href="#privacy">Privacy</a>
+        </div>
+      </nav>
+    </header>
+    <main>
+      <div class="hero">
+        <div class="eyebrow">Illustrative scenario · Not a standardized detector</div>
+        <h1>When does a pattern merit a closer look?</h1>
+        <p class="lead">A relay compares subscribers receiving the same live track under the same service policy and similar path conditions during a ten-minute window.</p>
+        <div class="callout">The comparison can flag behavior consistent with an advantage. It cannot prove AI use, unfair intent, or a policy violation.</div>
+      </div>
+
+      <section id="cohort">
+        <div class="section-head"><div><div class="eyebrow">Step 1 · Match the comparison group</div><h2>Choose a fair denominator</h2><p class="section-intro">Seven pseudonymous subscriptions share the same track, service class, ten-minute observation window, and comparable route quality. The example uses the peers’ median to reduce the effect of one unusually high or low subscriber.</p></div></div>
+        <div class="grid3">
+          <article class="panel info"><div class="label"><span class="dot"></span>Content</div><h3>Same track and interval</h3><p>Each subscriber had the same live objects available and was active for the full window.</p></article>
+          <article class="panel info"><div class="label"><span class="dot"></span>Policy</div><h3>Same service treatment</h3><p>All had the same authorized service class and priority policy; no emergency or premium class is mixed into the cohort.</p></article>
+          <article class="panel info"><div class="label"><span class="dot"></span>Network</div><h3>Comparable path</h3><p>Observed route and congestion indicators are similar. A material path difference would invalidate or split the comparison.</p></article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><div><div class="eyebrow">Step 2 · Compare sustained behavior</div><h2>Example observations</h2><p class="section-intro">All values are fictional and chosen to demonstrate the reasoning. “Subscriber A” is an opaque label; it carries no AI or identity assertion.</p></div></div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Measure · 10-minute window</th><th>Subscriber A</th><th>Peer cohort median</th><th>Observed difference</th></tr></thead>
+            <tbody>
+              <tr><td>Egress per active minute</td><td class="num">88 MB/min</td><td class="num">37 MB/min</td><td><span class="pill coral">2.4× peer median</span></td></tr>
+              <tr><td>REQUEST_UPDATE messages</td><td class="num">46</td><td class="num">5</td><td><span class="pill coral">9.2× peer median</span></td></tr>
+              <tr><td>Median object delivery delay</td><td class="num">104 ms</td><td class="num">181 ms</td><td><span class="pill">43% lower delay</span></td></tr>
+              <tr><td>Join latency</td><td class="num">230 ms</td><td class="num">410 ms</td><td><span class="pill">44% lower latency</span></td></tr>
+              <tr><td>Minutes with both elevated egress and lower delay</td><td class="num">9 of 10</td><td class="num">—</td><td><span class="pill gold">Persistent in this window</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="footnote">Egress, message counts, and delay are relay-observable only to the extent that the deployment measures them. The cohort and figures here are illustrative, not protocol-defined metrics.</p>
+      </section>
+
+      <section>
+        <div class="section-head"><div><div class="eyebrow">Visual readout</div><h2>Two signals move together</h2><p class="section-intro">The notable pattern is higher resource use alongside better delivery outcomes, sustained across most of the window.</p></div></div>
+        <div class="grid2">
+          <article class="panel metric">
+            <h3>Relay egress rate</h3>
+            <p class="sub">Scale: peer median = 1.0×</p>
+            <div style="margin:18px 0 8px;font-size:.83rem">Subscriber A · 2.4×</div><div class="bar"><span style="width:80%"></span></div>
+            <div style="margin:17px 0 8px;font-size:.83rem">Peer median · 1.0×</div><div class="bar"><span style="width:33%;background:var(--teal)"></span></div>
+          </article>
+          <article class="panel metric">
+            <h3>Median delivery delay</h3>
+            <p class="sub">Lower is better in this example</p>
+            <div style="margin:18px 0 8px;font-size:.83rem">Subscriber A · 104 ms</div><div class="bar"><span style="width:52%;background:var(--teal)"></span></div>
+            <div style="margin:17px 0 8px;font-size:.83rem">Peer median · 181 ms</div><div class="bar"><span style="width:91%;background:#a8b5b4"></span></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="decision">
+        <div class="section-head"><div><div class="eyebrow">Step 3 · Interpret, then review</div><h2>Example flag rule</h2><p class="section-intro">This rule is only a teaching example. The proposal does not standardize a threshold or detector.</p></div></div>
+        <div class="steps">
+          <div class="step"><strong>Flag for review when all three conditions hold:</strong><p>Resource use exceeds 2× the matched cohort median; delivery delay is at least 25% lower; both conditions persist in at least 8 of 10 one-minute windows.</p></div>
+          <div class="step"><strong>Subscriber A meets the example rule.</strong><p>Egress is 2.4× the peer median, delay is 43% lower, and both are present in 9 of 10 windows. The elevated update count adds context about request behavior.</p></div>
+          <div class="step"><strong>Output a bounded result.</strong><p>“Sustained resource and outcome disparity observed in cohort C during window W; review measurement and local policy.” Do not label the endpoint as AI, abusive, or unfair.</p></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><div><div class="eyebrow">Step 4 · Check alternative explanations</div><h2>Before treating the signal as meaningful</h2></div></div>
+        <div class="grid2">
+          <article class="panel info">
+            <h3>Possible confounders</h3>
+            <ul class="plain-list"><li>Different track variant, bitrate, object availability, or active duration.</li><li>Better route, lower access congestion, publisher-side timing, or a cache warm-up effect.</li><li>Legitimate policy or priority differences not represented in the cohort.</li><li>Measurement gaps, clock skew, or request counters that include retries.</li></ul>
+          </article>
+          <article class="panel info" id="privacy">
+            <h3>Privacy handling</h3>
+            <ul class="plain-list"><li>Use short-lived pseudonyms; retain aggregates where feasible.</li><li>Keep only fields needed for comparison and a limited review window.</li><li>Restrict access to drill-down evidence and record its use.</li><li>Do not inspect payload or infer subscriber identity from an opaque label.</li></ul>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="note"><strong>What this example demonstrates:</strong> a reproducible cohort comparison and a review signal. It does not demonstrate causality, identify AI, set a universal fairness standard, or automatically throttle a subscriber. A relay DoS policy may independently enforce resource limits under its local rules.</div>
+      </section>
+
+      <section>
+        <div class="section-head"><div><div class="eyebrow">Background</div><h2>How it relates to current work</h2></div></div>
+        <ul class="sources">
+          <li>The <a href="https://datatracker.ietf.org/doc/draft-englishm-moq-relay-dos/02/">MoQ Relay DoS draft</a> recommends cost tracking, rate limits, and resource isolation for relay deployments. This example illustrates a comparative measurement and service-outcome lens alongside that work.</li>
+          <li>The proposal and prior research are summarized on the <a href="proposal-overview.html">overview page</a>.</li>
+        </ul>
+      </section>
+    </main>
+    <footer><div class="footerrow"><span>Illustrative figures only · No endpoint identity or AI-use inference</span><span><a href="proposal-overview.html">← Back to proposal overview</a></span></div></footer>
+  </div>
+</body>
+</html>

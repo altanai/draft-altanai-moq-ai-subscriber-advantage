@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A proposal to identify privacy-conscious indicators of sustained subscriber advantage in Media over QUIC relay deployments.">
+  <title>Subscriber Advantage in MoQ — Proposal Overview</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <div class="topline"></div>
+  <div class="wrap">
+    <header>
+      <nav class="nav" aria-label="Main navigation">
+        <div class="brand">MoQ · Fairness · Privacy</div>
+        <div class="navlinks">
+          <a href="#proposal">Proposal</a>
+          <a href="#architecture">Components</a>
+          <a href="#related-work">Related work</a>
+          <a href="worked-example.html">Worked example →</a>
+        </div>
+      </nav>
+    </header>
+    <main>
+      <div class="hero" id="proposal">
+        <div class="eyebrow">Individual proposal · Media over QUIC</div>
+        <h1>Detecting patterns consistent with subscriber advantage</h1>
+        <p class="lead">An IETF proposal to detect patterns consistent with an advantage, while limiting exposure of subscriber data.</p>
+        <div class="callout">The question is whether comparable subscribers show a sustained disparity in relay resource use or service outcomes. Observations alone cannot establish that AI was used or caused the disparity.</div>
+      </div>
+
+      <section id="architecture">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">System view</div>
+            <h2>Components and data flow</h2>
+            <p class="section-intro">The relay observes requests and delivery conditions. A privacy guard limits what the comparison and review stages retain.</p>
+          </div>
+        </div>
+        <div class="panel diagram">
+          <svg viewBox="0 0 1040 370" role="img" aria-labelledby="diag-title diag-desc">
+            <title id="diag-title">MoQ subscriber advantage detection components</title>
+            <desc id="diag-desc">Publisher sends media through a shared MoQ relay to subscriber endpoints. The relay provides request metadata and resource or outcome aggregates to a privacy filter, cohort comparison, and operator review.</desc>
+            <defs>
+              <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#087e83"/></marker>
+              <style>
+                .box{fill:#fffefa;stroke:#d9ddd8;stroke-width:1.5}.relay{fill:#e3f0eb;stroke:#087e83;stroke-width:2}.privacy{fill:#e3f0eb;stroke:#b9d5ca;stroke-width:1.5}.review{fill:#f8e9e3;stroke:#e6c4b7;stroke-width:1.5}.h{font:700 15px Inter,system-ui,sans-serif;fill:#15293b}.s{font:12px Inter,system-ui,sans-serif;fill:#526576}.cap{font:700 11px Inter,system-ui,sans-serif;letter-spacing:1.2px;fill:#087e83}.wire{fill:none;stroke:#087e83;stroke-width:2;marker-end:url(#arrow)}.dash{fill:none;stroke:#087e83;stroke-width:2;stroke-dasharray:5 5;marker-end:url(#arrow)}.ico{fill:none;stroke:#087e83;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+              </style>
+            </defs>
+            <text x="28" y="30" class="cap">MEDIA DELIVERY</text>
+            <rect x="28" y="52" width="210" height="84" rx="14" class="box"/>
+            <circle cx="62" cy="86" r="10" class="ico"/><path d="M45 115c2-19 32-19 34 0" class="ico"/>
+            <text x="91" y="84" class="h">Publisher</text><text x="91" y="107" class="s">publishes tracks</text>
+            <path d="M246 94H386" class="wire"/>
+            <rect x="400" y="44" width="240" height="100" rx="16" class="relay"/>
+            <path d="M434 77h34m-34 0 17 31 17-31m-34 0 17 0" class="ico"/><circle cx="434" cy="77" r="3" fill="#087e83"/><circle cx="468" cy="77" r="3" fill="#087e83"/><circle cx="451" cy="108" r="3" fill="#087e83"/>
+            <text x="486" y="83" class="h">MoQ relay</text><text x="486" y="105" class="s">forwards objects · shared resources</text>
+            <path d="M648 94H786" class="wire"/>
+            <rect x="800" y="52" width="210" height="84" rx="14" class="box"/>
+            <circle cx="835" cy="80" r="8" class="ico"/><circle cx="817" cy="89" r="6" class="ico"/><circle cx="853" cy="89" r="6" class="ico"/><path d="M820 116c1-13 28-13 30 0m-43-7c1-9 14-11 20-5m18 5c2-9 15-11 21-5" class="ico"/>
+            <text x="873" y="84" class="h">Subscribers</text><text x="873" y="107" class="s">track consumers</text>
+
+            <text x="28" y="190" class="cap">MEASUREMENT AND REVIEW · RELAY-VISIBLE SIGNALS</text>
+            <path d="M520 146V208H130V235" class="dash"/>
+            <rect x="28" y="244" width="205" height="94" rx="13" class="box"/>
+            <path d="M52 276h11l6-11 7 24 7-17 6 4h10" class="ico"/>
+            <text x="112" y="278" class="h">Telemetry</text><text x="47" y="305" class="s">request metadata · resource share</text><text x="47" y="323" class="s">delivery delay · cache outcomes</text>
+            <path d="M239 291H276" class="wire"/>
+            <rect x="288" y="244" width="205" height="94" rx="13" class="privacy"/>
+            <path d="M316 267l12-5 12 5v12c0 10-7 16-12 19-5-3-12-9-12-19z" class="ico"/><path d="m322 279 5 5 8-10" class="ico"/>
+            <text x="351" y="278" class="h">Privacy filter</text><text x="307" y="305" class="s">aggregate or pseudonymize</text><text x="307" y="323" class="s">limit fields and retention</text>
+            <path d="M499 291H536" class="wire"/>
+            <rect x="548" y="244" width="205" height="94" rx="13" class="box"/>
+            <path d="M575 311v-26m10 26v-16m10 16v-35m10 35v-23" class="ico"/>
+            <text x="620" y="278" class="h">Cohort comparison</text><text x="567" y="305" class="s">normalize content, policy,</text><text x="567" y="323" class="s">time window, and path</text>
+            <path d="M759 291H796" class="wire"/>
+            <rect x="808" y="244" width="202" height="94" rx="13" class="review"/>
+            <circle cx="837" cy="287" r="15" class="ico"/><circle cx="837" cy="287" r="8" class="ico"/><circle cx="837" cy="287" r="2" fill="#087e83"/>
+            <text x="866" y="278" class="h">Operator review</text><text x="827" y="305" class="s">pattern for review;</text><text x="827" y="323" class="s">local action policy</text>
+          </svg>
+          <p class="caption">No payload inspection is proposed. A signal indicates a pattern for review; it does not identify an AI endpoint, prove intent, or prescribe enforcement.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><div><div class="eyebrow">What it adds</div><h2>A comparative fairness lens</h2><p class="section-intro">The contribution is a measurement question and privacy-aware review scope—not a new relay control protocol.</p></div></div>
+        <div class="grid2">
+          <article class="panel info boundary">
+            <div class="label"><span class="dot"></span>Measure in context</div>
+            <h3>Compare like with like</h3>
+            <p>Interpret repeated resource use and service outcomes among subscriptions with comparable content, service policy, time window, and relevant path conditions.</p>
+            <ul class="plain-list"><li>Resource signals: egress bytes, queue or buffer pressure, cache effects.</li><li>Outcome signals: join latency, object delivery delay, available quality indicators.</li></ul>
+          </article>
+          <article class="panel info caution">
+            <div class="label" style="color:var(--coral)"><span class="dot"></span>Keep the claim bounded</div>
+            <h3>Indicator, not verdict</h3>
+            <p>A sustained disparity is a reason to review measurement and policy. It does not show that AI caused the pattern or that a subscriber broke a rule.</p>
+            <ul class="plain-list"><li>No AI-versus-human classification.</li><li>No standardized algorithm, threshold, enforcement, or remediation.</li><li>Privacy controls should bound identity, exposure, and retention.</li></ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="related-work">
+        <div class="section-head"><div><div class="eyebrow">Background research</div><h2>Related work and boundaries</h2><p class="section-intro">These efforts address adjacent layers of the problem. The proposal should cite the relay DoS draft and distinguish its comparative measurement goal from its mitigations.</p></div></div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Work</th><th>What it covers</th><th>Relationship to this proposal</th></tr></thead>
+            <tbody>
+              <tr><td><a href="https://datatracker.ietf.org/doc/draft-englishm-moq-relay-dos/02/">MoQ Relay DoS -02</a></td><td>Relay threat analysis and operational advice: resource cost tracking, per-client limits, rate limiting, and resource isolation/fairness policies.</td><td>Strong overlap in signals and relay resource concerns. This proposal emphasizes sustained, cohort-based comparison of resource use <em>and service outcomes</em>, with privacy limits.</td></tr>
+              <tr><td><a href="https://www.rfc-editor.org/rfc/rfc6357.html">RFC 6357</a>, <a href="https://www.rfc-editor.org/rfc/rfc7339.html">7339</a>, <a href="https://www.rfc-editor.org/rfc/rfc7415.html">7415</a></td><td>SIP overload design and signaling-rate controls; RFC 6357 also discusses allocating signaling capacity among upstream neighbors.</td><td>Useful precedent for load protection and capacity sharing. Different layer and unit from subscriber-level MoQ relay outcome comparison.</td></tr>
+              <tr><td><a href="https://www.rfc-editor.org/rfc/rfc4412.html">RFC 4412</a>; <a href="https://www.rfc-editor.org/rfc/rfc8888.html">RFC 8888</a></td><td>SIP resource-priority requests under local policy; RTCP feedback for media congestion control.</td><td>Priority authorization and path congestion remain their own mechanisms; neither supplies the proposed MoQ comparison.</td></tr>
+              <tr><td><a href="https://datatracker.ietf.org/doc/draft-nser-sip-ai-problem-statement/00/">SIP AI-Session-ID -00</a></td><td>Expired individual problem statement for a stable application-level identifier to correlate an AI voice workflow across SIP dialogs and components.</td><td>Could support event correlation in a SIP system; it does not define resource measurement or fairness detection.</td></tr>
+              <tr><td><a href="https://datatracker.ietf.org/doc/draft-aipref-network-privacy-control/">AIPREF privacy-control draft</a> and <a href="https://datatracker.ietf.org/doc/draft-jennings-moq-metrics/">MoQ metrics work</a></td><td>Adjacent work on AI data-use preferences and MoQ measurement.</td><td>Privacy preferences can bound telemetry exposure; measurement definitions can inform signals. Neither alone decides whether a disparity is an advantage.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <div class="note"><strong>Most useful next step:</strong> define a worked measurement example with a matched cohort, a sustained-disparity rule, plausible confounders, and a privacy-limited review output. Keep any threshold explicitly illustrative until the working group agrees on requirements.</div>
+      </section>
+
+      <section>
+        <div class="section-head"><div><div class="eyebrow">Sources</div><h2>Primary references</h2></div></div>
+        <ul class="sources">
+          <li><a href="https://github.com/altanai/draft-altanai-moq-ai-subscriber-advantage">Proposal source repository</a></li>
+          <li><a href="https://datatracker.ietf.org/doc/draft-englishm-moq-relay-dos/02/">Denial-of-Service Considerations for Media over QUIC Relay Deployments, version 02</a> — active individual Internet-Draft; informational.</li>
+          <li><a href="https://www.rfc-editor.org/rfc/rfc6357.html">RFC 6357</a>, <a href="https://www.rfc-editor.org/rfc/rfc7339.html">RFC 7339</a>, <a href="https://www.rfc-editor.org/rfc/rfc7415.html">RFC 7415</a>, <a href="https://www.rfc-editor.org/rfc/rfc4412.html">RFC 4412</a>, and <a href="https://www.rfc-editor.org/rfc/rfc8888.html">RFC 8888</a>.</li>
+          <li><a href="https://datatracker.ietf.org/doc/draft-nser-sip-ai-problem-statement/00/">Problem Statement for an AI-Session-ID in SIP, version 00</a> — expired individual Internet-Draft.</li>
+          <li><a href="https://datatracker.ietf.org/doc/draft-aipref-network-privacy-control/">AI Preferences for Privacy-Preserving Network Traffic Analysis</a> and <a href="https://datatracker.ietf.org/doc/draft-jennings-moq-metrics/">Metrics over MOQT</a>.</li>
+        </ul>
+        <p class="footnote">Internet-Drafts are work in progress and do not represent IETF endorsement or an adopted standard.</p>
+      </section>
+    </main>
+    <footer><div class="footerrow"><span>Based on the proposal and background research gathered to date.</span><span><a href="worked-example.html">Continue to the worked example →</a></span></div></footer>
+  </div>
+</body>
+</html>

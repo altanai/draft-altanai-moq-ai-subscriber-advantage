@@ -21,4 +21,8 @@ archive.json
 draft-altanai-moq-ai-subscriber-advantage.xml
 package-lock.json
 report.xml
+
+# Keep the supporting presentation and background pages with the source.
+!output/**/*.html
+!output/**/*.pdf
 !requirements.txt
