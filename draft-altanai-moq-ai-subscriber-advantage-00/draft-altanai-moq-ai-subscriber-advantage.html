@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Detecting AI-Driven Subscriber Advantage in Media over QUIC (MOQ)</title>
+<meta content="Altanai Bisht" name="author">
+<meta content="
+       This document describes subscriber behavior that may produce sustained
+advantages in service outcomes or disproportionate resource consumption
+at shared Media over QUIC (MoQ) relays. AI-assisted optimization is a
+motivating scenario; observations alone cannot establish whether AI was
+used or caused a disparity. The document outlines contextual measurement,
+privacy safeguards, and a proposed extension for authorization-bound
+resource budgets with explicit accounting and recovery behavior. It
+builds on existing MoQ authorization and relay denial-of-service work.
+This informational document defines no new MoQ messages, token claims,
+registries, or standardized detection algorithm. 
+    " name="description">
+<meta content="xml2rfc 3.35.0" name="generator">
+<meta content="MOQ" name="keyword">
+<meta content="fairness" name="keyword">
+<meta content="AI" name="keyword">
+<meta content="authorization" name="keyword">
+<meta content="resource budgets" name="keyword">
+<meta content="draft-altanai-moq-ai-subscriber-advantage-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.35.0
+    Python 3.14.10
+    ConfigArgParse 1.9.0
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.14.3
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.9.4
+-->
+<link href="draft-altanai-moq-ai-subscriber-advantage.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill], [fill] *)) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">MOQ Subscriber Advantage</td>
+<td class="right">November 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Bisht</td>
+<td class="center">Expires 19 May 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-altanai-moq-ai-subscriber-advantage-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-11-15" class="published">15 November 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-05-19">19 May 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">A. Bisht</div>
+<div class="org">Cisco</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Detecting AI-Driven Subscriber Advantage in Media over QUIC (MOQ)</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document describes subscriber behavior that may produce sustained
+advantages in service outcomes or disproportionate resource consumption
+at shared Media over QUIC (MoQ) relays. AI-assisted optimization is a
+motivating scenario; observations alone cannot establish whether AI was
+used or caused a disparity. The document outlines contextual measurement,
+privacy safeguards, and a proposed extension for authorization-bound
+resource budgets with explicit accounting and recovery behavior. It
+builds on existing MoQ authorization and relay denial-of-service work.
+This informational document defines no new MoQ messages, token claims,
+registries, or standardized detection algorithm.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-discussion-venues">
+<a href="#name-discussion-venues" class="section-name selfRef">Discussion Venues</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">Discussion of this document takes place on the
+    Media Over QUIC Working Group mailing list (moq@ietf.org),
+    which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/moq/">https://mailarchive.ietf.org/arch/browse/moq/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">Source for this draft and an issue tracker can be found at
+    <span><a href="https://github.com/altanai/draft-altanai-moq-ai-subscriber-advantage">https://github.com/altanai/draft-altanai-moq-ai-subscriber-advantage</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 19 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology-and-scope" class="internal xref">Terminology and Scope</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-motivation-and-problem-stat" class="internal xref">Motivation and Problem Statement</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-priority-scope" class="internal xref">Priority Scope</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-observable-signals-and-cont" class="internal xref">Observable Signals and Context</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-contextual-comparison" class="internal xref">Contextual Comparison</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-deployment-components" class="internal xref">Deployment Components</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-privacy-process" class="internal xref">Privacy Process</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-authorization-bound-resourc" class="internal xref">Authorization-Bound Resource Budgets</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-usage-state-and-multiple-se" class="internal xref">Usage State and Multiple Sessions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-policy-response-and-recover" class="internal xref">Policy Response and Recovery</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-worked-examples" class="internal xref">Worked Examples</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-a-comparison-signal" class="internal xref">A Comparison Signal</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-four-authorized-active-subs" class="internal xref">Four Authorized Active Subscriptions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-relationship-to-other-work" class="internal xref">Relationship to Other Work</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-security-and-privacy-consid" class="internal xref">Security and Privacy Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">Media over QUIC Transport (MoQT) <span>[<a href="#MoQTransport" class="cite xref">MoQTransport</a>]</span> supports delivery of
+tracks through relays that serve multiple subscribers. Endpoints can
+optimize track selection, request timing, subscription filters, and
+relative priority. These choices may be made by an AI model, a
+conventional adaptive algorithm, or fixed application rules.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">Operators may wish to identify sustained differences in resource use
+or service outcomes among comparable subscribers. A disparity can be
+useful for capacity planning, service assurance, or a review of relay
+policy. It is not by itself evidence of misconduct, an unfair policy,
+or use of AI. Higher quality can be a legitimate result of a better path,
+authorized service treatment, or more efficient application behavior.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document develops two related questions: how to observe such
+patterns while limiting subscriber data exposure, and how a future
+resource-budget profile could associate explicit usage limits with
+existing authorization mechanisms. The latter extends the original
+detection scope and is presented as design considerations for further
+work, rather than a completed token or enforcement specification.<a href="#section-1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="terminology-and-scope">
+<section id="section-2">
+      <h2 id="name-terminology-and-scope">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology-and-scope" class="section-name selfRef">Terminology and Scope</a>
+      </h2>
+<p id="section-2-1">A subscriber endpoint can hold multiple subscriptions. A subscription
+is a relationship for receiving one track; it is distinct from a MoQT
+session, which can carry multiple subscriptions and fetches. Separate
+subscriber endpoints commonly use separate sessions. The object and
+session model is defined by <span>[<a href="#MoQTransport" class="cite xref">MoQTransport</a>]</span>.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">For this document, a <em>comparison cohort</em> is a group of observations
+matched for content, service policy, observation interval, and relevant
+path conditions. A <em>candidate advantage</em> is a sustained disparity in
+resource use or delivery outcomes within such a cohort. The designation
+identifies a measurement for review and does not establish its cause.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">A <em>resource budget</em> is a proposed policy describing an allowed amount,
+rate, or concurrency of a defined resource. An <em>accounting domain</em> is the
+set of sessions and relay instances over which that budget applies.
+An <em>accounting reference</em> identifies the shared usage state within that
+domain and validity period; it need not expose an account identity to an
+analytics system.<a href="#section-2-3" class="pilcrow">¶</a></p>
+<p id="section-2-4">In scope are observable signals, interpretation of those signals,
+privacy-conscious processing, resource-budget design considerations,
+and relationships to existing MoQ and SIP mechanisms. Out of scope are
+AI-versus-human attestation, universal definitions of fairness, monetary
+penalties, standardized machine-learning algorithms or thresholds, and
+new token encodings or protocol error codes. The illustrative policies
+below are not interoperability requirements.<a href="#section-2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="motivation-and-problem-statement">
+<section id="section-3">
+      <h2 id="name-motivation-and-problem-stat">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-motivation-and-problem-stat" class="section-name selfRef">Motivation and Problem Statement</a>
+      </h2>
+<p id="section-3-1">Shared relay resources include CPU, subscription state, buffer memory,
+cache capacity, backend services, and upstream and downstream bandwidth.
+The incremental cost of a request depends on the implementation and
+whether suitable upstream subscriptions or cached objects already exist.
+Subscription aggregation can reduce upstream work. Substantial media
+delivery following a small request is normal protocol operation and is
+not sufficient evidence of abuse or harmful amplification.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">Candidate concerns include:<a href="#section-3-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3-3.1">
+          <p id="section-3-3.1.1">Repeated creation and cancellation of subscriptions, or frequent
+updates, causing processing and state-management costs.<a href="#section-3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-3.2">
+          <p id="section-3-3.2.1">Request patterns that increase fetch work, cache turnover, or egress,
+subject to the relay's caching and aggregation behavior.<a href="#section-3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-3.3">
+          <p id="section-3-3.3.1">Buffer accumulation from slow consumption or join-time delivery.<a href="#section-3-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-3.4">
+          <p id="section-3-3.4.1">A session consuming a disproportionate share of a constrained relay
+resource under the operator's allocation policy.<a href="#section-3-3.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-3-4">These concerns overlap with the threat analysis and operational guidance
+in <span>[<a href="#RelayDoS" class="cite xref">RelayDoS</a>]</span>. This document emphasizes contextual comparison and
+privacy considerations, together with an exploratory connection between
+usage measurement and explicit resource authorization.<a href="#section-3-4" class="pilcrow">¶</a></p>
+<div id="priority-scope">
+<section id="section-3.1">
+        <h3 id="name-priority-scope">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-priority-scope" class="section-name selfRef">Priority Scope</a>
+        </h3>
+<p id="section-3.1-1">Subscriber priority influences transmission ordering among subscriptions
+and fetch responses within the same MoQT session. A subscriber requesting
+priority 0 does not thereby acquire a protocol-defined rank above a
+subscriber in another session. Relays are advised not to copy downstream
+subscriber priorities directly to upstream subscriptions; upstream
+priorities depend on relay policy <span>[<a href="#MoQTransport" class="cite xref">MoQTransport</a>]</span>.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">Frequent priority updates may consume parsing and scheduling resources.
+Effects on other subscribers depend on shared-resource contention and
+implementation policy. A priority value, a priority change, or an improved
+delivery outcome alone does not demonstrate an unfair advantage. A
+subscriber priority adjustment also does not implement a relay-wide
+resource restriction across independent sessions.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="observable-signals-and-context">
+<section id="section-4">
+      <h2 id="name-observable-signals-and-cont">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-observable-signals-and-cont" class="section-name selfRef">Observable Signals and Context</a>
+      </h2>
+<p id="section-4-1">The following signals are candidates rather than mandatory metrics.
+They are available only where a deployment can measure or attribute them.
+Content or timing metadata can itself be sensitive even when media
+payloads remain encrypted.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+        <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Signal</th>
+            <th class="text-left" rowspan="1" colspan="1">Interpretation and context</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Subscription lifecycle activity</td>
+            <td class="text-left" rowspan="1" colspan="1">Count creations, cancellations, and updates over a defined interval; distinguish useful adaptation, retries, and pathological churn.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Track and filter changes</td>
+            <td class="text-left" rowspan="1" colspan="1">Compare changes relative to available content and group boundaries without retaining unnecessary viewing histories.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Priority updates</td>
+            <td class="text-left" rowspan="1" colspan="1">Measure update frequency and work; priority values are relative within a session.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">FETCH and SUBSCRIBE mix</td>
+            <td class="text-left" rowspan="1" colspan="1">Account for historical delivery, repair, and duplicate requests; define what the byte count includes.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Resource consumption</td>
+            <td class="text-left" rowspan="1" colspan="1">Measure attributable egress, buffered bytes, or control-processing work; identify shared costs that cannot be assigned to one subscriber.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Delivery outcomes</td>
+            <td class="text-left" rowspan="1" colspan="1">Measure request-to-first-object or relay-observed delivery delay using defined endpoints and clocks; do not equate these with playback quality.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Cache and upstream effects</td>
+            <td class="text-left" rowspan="1" colspan="1">Use available hit, miss, eviction, and upstream-work counters while accounting for sharing among subscribers.</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-4-3"><span>[<a href="#MoQMetrics" class="cite xref">MoQMetrics</a>]</span> provides related measurement work. This document does not
+redefine its metrics or assume that every candidate signal is already
+standardized.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<div id="contextual-comparison">
+<section id="section-4.1">
+        <h3 id="name-contextual-comparison">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-contextual-comparison" class="section-name selfRef">Contextual Comparison</a>
+        </h3>
+<p id="section-4.1-1">Choose a cohort and a measurement interval before interpreting a
+disparity. Relevant context includes track variant and bitrate,
+subscription duration, publisher timing, authorized service class,
+cache state, path latency, congestion, and the relay's allocation policy.
+Normalize measurements by active time or useful delivered content where
+appropriate, and state the limits of attribution and sampling.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">Persistence over several intervals can distinguish a sustained pattern
+from a short transition, but does not demonstrate causality. An analyzer
+should be able to return an inconclusive result when the cohort is too
+small or required context is missing. Controlled experiments with known
+client implementations can study AI-assisted behavior; relay telemetry
+alone cannot reliably label arbitrary endpoints as AI or non-AI.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="deployment-components">
+<section id="section-5">
+      <h2 id="name-deployment-components">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-deployment-components" class="section-name selfRef">Deployment Components</a>
+      </h2>
+<p id="section-5-1">A possible deployment separates forwarding, budget accounting, and
+privacy-limited analysis. These are logical components and may be
+co-located. Existing token schemes provide the authorization foundation;
+resource-budget interpretation and accounting require further design.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5-2">
+<pre>
+  Grant issuer -- authorization --&gt; Subscriber
+                                      |
+                               token + request
+                                      |
+                                      v
+  Publisher ---- media objects ---&gt; Relay
+                                      |
+                           resource-use measurements
+                                      |
+                                      v
+                                Budget ledger
+                               /             \
+                    limited signals       limit decision
+                           /                   \
+                    Privacy guard          Relay policy
+                          |                 response
+                          v
+                   Authorized review
+</pre><a href="#section-5-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5-3">The issuer grants permissions. The relay validates the presented
+authorization and maintains or consults usage state. The analytics path
+receives the minimum information needed for comparison and review,
+subject to the privacy process below. A comparison flag and a verified
+budget violation are separate inputs to operator decisions.<a href="#section-5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="privacy-process">
+<section id="section-6">
+      <h2 id="name-privacy-process">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-privacy-process" class="section-name selfRef">Privacy Process</a>
+      </h2>
+<p id="section-6-1">The following deployment safeguards elaborate aggregation and minimal
+retention. They are design guidance and do not establish a formal
+anonymity guarantee. General privacy considerations are discussed in
+<span>[<a href="#RFC6973" class="cite xref">RFC6973</a>]</span>. Related AI-preference binding work <span>[<a href="#AIPrefRealtime" class="cite xref">AIPrefRealtime</a>]</span> can
+inform treatment of expressed processing preferences; a preference
+signal does not itself anonymize data or authorize unrelated use.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6-2">
+<li id="section-6-2.1">
+          <p id="section-6-2.1.1"><strong>Define purpose and permitted processing.</strong> Identify the measurement
+purpose, permitted fields, applicable preferences, and authorized
+recipients. Relay visibility of a field does not establish permission
+to retain or disclose it for every analytics purpose.<a href="#section-6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-2.2">
+          <p id="section-6-2.2.1"><strong>Minimize collection.</strong> Prefer counters and necessary control
+metadata. Avoid media-payload inspection, direct account identifiers
+in analytics, and AI-versus-human labels inferred from traffic.<a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-2.3">
+          <p id="section-6-2.3.1"><strong>Scope pseudonyms.</strong> Use short-lived identifiers specific to an
+analysis domain and interval. If a re-identification mapping is
+needed, keep it separately protected. A linkable token is pseudonymous,
+not anonymous, even if it does not contain a subscriber's name.<a href="#section-6-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-2.4">
+          <p id="section-6-2.4.1"><strong>Aggregate with context.</strong> Prefer interval and cohort statistics.
+Coarsen or suppress small groups or detailed combinations that could
+reveal an individual. Minimum cohort sizes and any stronger privacy
+guarantees need to be defined by the deployment or a future profile.<a href="#section-6-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-2.5">
+          <p id="section-6-2.5.1"><strong>Limit and audit review.</strong> Report the interval, cohort size, disparity,
+and measurement caveats. Restrict detailed inspection to authorized
+reviewers and record that access. A comparison flag alone does not
+establish a policy violation or justify automatic punishment.<a href="#section-6-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-2.6">
+          <p id="section-6-2.6.1"><strong>Expire detailed records.</strong> Define retention periods for events,
+pseudonym mappings, usage state, and review records according to their
+respective purposes. Delete or aggregate records when those purposes
+end. A future profile needs explicit retention and deletion behavior.<a href="#section-6-2.6.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-6-3">Budget accounting may require continuity across sessions or token
+renewals. That continuity should remain within the stated accounting
+domain and budget period. Analytics pseudonym rotation does not reset
+usage counters. Conversely, maintaining a budget does not justify a
+permanent identifier shared across unrelated operators. Privacy Pass
+work <span>[<a href="#PrivacyPass" class="cite xref">PrivacyPass</a>]</span> is relevant to privacy-conscious authorization;
+maintaining shared quotas and preventing repeated issuance from resetting
+usage require an explicit design under the chosen token scheme.<a href="#section-6-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authorization-bound-resource-budgets">
+<section id="section-7">
+      <h2 id="name-authorization-bound-resourc">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-authorization-bound-resourc" class="section-name selfRef">Authorization-Bound Resource Budgets</a>
+      </h2>
+<p id="section-7-1">MoQT already carries authorization tokens <span>[<a href="#MoQTransport" class="cite xref">MoQTransport</a>]</span>. <span>[<a href="#C4M" class="cite xref">C4M</a>]</span>
+defines action and content scopes for Common Access Tokens and supports
+revalidation of ongoing authorization. The proposed direction is to
+specify how an authorized resource policy would be interpreted and
+accounted for, reusing existing token capabilities where suitable.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">The following are conceptual policy elements, not registered claims:<a href="#section-7-2" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+        <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Policy element</th>
+            <th class="text-left" rowspan="1" colspan="1">Design question</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Service class or policy reference</td>
+            <td class="text-left" rowspan="1" colspan="1">Which agreed policy does this label select, and which version applies?</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Content and operation scope</td>
+            <td class="text-left" rowspan="1" colspan="1">Which tracks, namespaces, and actions are permitted under existing authorization rules?</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Resource allowance</td>
+            <td class="text-left" rowspan="1" colspan="1">What concurrency, rate, bytes, or other measurable quantity is allowed?</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Measurement window</td>
+            <td class="text-left" rowspan="1" colspan="1">Is the allowance instantaneous, rolling, or tied to an explicit interval; what burst behavior is permitted?</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Accounting scope</td>
+            <td class="text-left" rowspan="1" colspan="1">Which sessions, relays, and issuer or operator domain share usage state?</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Accounting reference</td>
+            <td class="text-left" rowspan="1" colspan="1">How are related authorizations associated with one budget without revealing unnecessary identity?</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Validity and renewal</td>
+            <td class="text-left" rowspan="1" colspan="1">When does the grant expire, and how does renewal interact with remaining or already-used budget?</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-7-4">A subscriber cannot grant itself a more generous policy by modifying a
+trusted authorization. The issuer and verifier need integrity-protected
+claims and an agreed interpretation. Adding an arbitrary field is not
+sufficient: an implementation that does not understand a resource
+restriction must not silently treat it as an unrestricted grant.
+Any future encoding needs to follow the chosen token scheme's extension
+and validation rules. This document does not allocate such an encoding.<a href="#section-7-4" class="pilcrow">¶</a></p>
+<div id="usage-state-and-multiple-sessions">
+<section id="section-7.1">
+        <h3 id="name-usage-state-and-multiple-se">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-usage-state-and-multiple-se" class="section-name selfRef">Usage State and Multiple Sessions</a>
+        </h3>
+<p id="section-7.1-1">An authorization expresses a grant; it is not a mutable usage counter.
+For example, four authorized concurrent subscriptions require the relay
+to track admission and release of those subscriptions. Multiple tokens
+or sessions associated with the same budget must share the intended
+accounting state rather than each receiving the full allowance again.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-2">A future profile needs to define atomic admission decisions, treatment
+of pending and paused subscriptions, cancellation, disconnects, expiry,
+and reclamation of abandoned reservations. If several relays enforce a
+shared budget, the design needs to state its consistency model and how
+it handles partitions or accounting-service failures. Partitioned
+allowances or leases are possible approaches requiring further analysis.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
+<p id="section-7.1-3">Revalidating an unchanged signature does not by itself reveal a quota
+change or update shared counters. Changes to authorization require a
+specified mechanism such as a stateful policy check, a replacement grant,
+expiry, or a supported revocation mechanism. Fresh token issuance and
+renewal need explicit rules so that they cannot unintentionally reset an
+exhausted allowance. These requirements must be reconciled with privacy
+and unlinkability objectives of the selected authorization scheme.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="policy-response-and-recovery">
+<section id="section-7.2">
+        <h3 id="name-policy-response-and-recover">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-policy-response-and-recover" class="section-name selfRef">Policy Response and Recovery</a>
+        </h3>
+<p id="section-7.2-1">A relay can enforce a clear admission or rate rule without inferring AI
+use, intent, or moral fault. Possible responses include rejecting an
+excess request, applying a temporary request-rate limit, or requiring
+renewed authorization where appropriate to the token scheme. Operators
+choose policy and thresholds; this document defines no universal penalty.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-2">A future profile needs to describe protocol feedback, recovery conditions,
+restriction duration, and review of disputed measurements. It should
+distinguish exhausted resources or quotas from invalid authorization and
+use existing protocol errors according to their defined meanings. This
+document assigns no new error codes and does not redefine subscriber
+priority as a cross-session enforcement mechanism.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="worked-examples">
+<section id="section-8">
+      <h2 id="name-worked-examples">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-worked-examples" class="section-name selfRef">Worked Examples</a>
+      </h2>
+<p id="section-8-1">All values in this section are illustrative. They are neither measured
+results nor standardized thresholds.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<div id="a-comparison-signal">
+<section id="section-8.1">
+        <h3 id="name-a-comparison-signal">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-a-comparison-signal" class="section-name selfRef">A Comparison Signal</a>
+        </h3>
+<p id="section-8.1-1">Consider seven subscriptions to the same live track, active for ten
+minutes, under the same service policy and similar measured path
+conditions. Suppose subscriber A has 88 MB/min of relay egress compared
+with a peer median of 37 MB/min, and a median relay-observed delivery
+delay of 104 ms compared with 181 ms. The egress counter includes repeat
+and historical delivery as well as live objects; it does not count
+unique content alone.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-2">An analyzer could report the sustained difference for review. It would
+still need to examine fetches, duplicate delivery, caching, publisher
+behavior, and measurement quality. Higher egress and lower delay do not
+prove that A caused another subscriber's delay, used AI, or exceeded an
+authorized budget. An explicit policy violation requires separate
+evidence against that policy.<a href="#section-8.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="four-authorized-active-subscriptions">
+<section id="section-8.2">
+        <h3 id="name-four-authorized-active-subs">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-four-authorized-active-subs" class="section-name selfRef">Four Authorized Active Subscriptions</a>
+        </h3>
+<p id="section-8.2-1">Suppose an issuer grants access to an event namespace with a policy
+allowing four active subscriptions across the sessions sharing one
+budget. The grant is valid for ten minutes. These are conceptual policy
+values; this document defines no claim names or serialization for them.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2">The relay admits four subscriptions and records four reservations. A
+fifth active subscription would exceed the allowance, so the relay
+rejects that request with appropriate existing feedback under its policy.
+The four admitted subscriptions remain governed by their existing terms.
+Repeated excess requests may trigger a documented temporary request-rate
+restriction. Admission can resume when a reservation is released and any
+temporary restriction has ended, subject to valid authorization.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+<p id="section-8.2-3">The accounting reference is scoped to the operator and budget period.
+Detailed review is access-controlled, and retention follows the purposes
+specified above. Opening another session or obtaining another token for
+the same budget does not create another four reservations. How that
+association is securely established remains part of the future profile.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="relationship-to-other-work">
+<section id="section-9">
+      <h2 id="name-relationship-to-other-work">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-relationship-to-other-work" class="section-name selfRef">Relationship to Other Work</a>
+      </h2>
+<ul class="normal">
+<li class="normal" id="section-9-1.1">
+          <p id="section-9-1.1.1"><strong>MoQ transport and metrics:</strong> <span>[<a href="#MoQTransport" class="cite xref">MoQTransport</a>]</span> supplies the object,
+subscription, priority, and authorization framework. <span>[<a href="#MoQMetrics" class="cite xref">MoQMetrics</a>]</span>
+provides related measurement work. This document does not replace
+transport flow control or congestion control <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>.<a href="#section-9-1.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-1.2">
+          <p id="section-9-1.2.1"><strong>MoQ relay DoS:</strong> <span>[<a href="#RelayDoS" class="cite xref">RelayDoS</a>]</span> already discusses cost tracking,
+per-client or per-identity limits, buffering, and resource isolation.
+The comparative measurement and privacy guidance here complements
+that work. Authorization and budget semantics should be developed in
+coordination with the relevant MoQ authorization work.<a href="#section-9-1.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-1.3">
+          <p id="section-9-1.3.1"><strong>Common Access Tokens and Privacy Pass:</strong> <span>[<a href="#C4M" class="cite xref">C4M</a>]</span> and <span>[<a href="#PrivacyPass" class="cite xref">PrivacyPass</a>]</span>
+provide existing authorization approaches. The resource-budget design
+needs further comparison with their capabilities, including the
+underlying Common Access Token specification. Token-based permission
+alone is not claimed as a new contribution.<a href="#section-9-1.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-1.4">
+          <p id="section-9-1.4.1"><strong>SIP overload and authorized priority:</strong> <span>[<a href="#RFC6357" class="cite xref">RFC6357</a>]</span>, <span>[<a href="#RFC7339" class="cite xref">RFC7339</a>]</span>, and
+<span>[<a href="#RFC7415" class="cite xref">RFC7415</a>]</span> address SIP signaling overload; <span>[<a href="#RFC6357" class="cite xref">RFC6357</a>]</span> discusses
+capacity allocation among upstream neighbors. <span>[<a href="#RFC4412" class="cite xref">RFC4412</a>]</span> permits
+policy-authorized resource priority. These are useful precedents but
+operate at different scopes from per-subscriber MoQ relay analysis.<a href="#section-9-1.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-1.5">
+          <p id="section-9-1.5.1"><strong>RTP congestion control:</strong> <span>[<a href="#RFC8836" class="cite xref">RFC8836</a>]</span> and <span>[<a href="#RFC8888" class="cite xref">RFC8888</a>]</span> concern media
+congestion-control requirements and feedback. They do not themselves
+define the cohort comparison or authorization-bound relay budget
+considered here.<a href="#section-9-1.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-9-2">SIP deployments may face related questions around shared call-control
+or media resources. A SIP proxy and a media relay do not necessarily
+observe the same events. A SIP-specific design would require a separate
+measurement model and is not specified by this document.<a href="#section-9-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-and-privacy-considerations">
+<section id="section-10">
+      <h2 id="name-security-and-privacy-consid">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-security-and-privacy-consid" class="section-name selfRef">Security and Privacy Considerations</a>
+      </h2>
+<p id="section-10-1">Behavioral metadata can expose viewing patterns, correlate sessions,
+and support identity inference. Pseudonyms and aggregates do not
+eliminate those risks. Cohort size, granularity, retention, recipient
+access, and correlation across purposes all affect exposure. The privacy
+process above describes proposed safeguards, not a proof of anonymity.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-2">A malicious client could distribute requests across sessions or tokens
+to avoid isolated limits. A malicious or faulty accounting component
+could overstate consumption and deny legitimate service. Shared ledgers
+and revalidation endpoints can themselves become overload targets.
+Budget enforcement therefore needs explicit trust boundaries, protected
+accounting state, bounded processing, recovery behavior, and auditable
+operator decisions. Local operator controls may still be needed during
+accounting failures or legitimate flash crowds.<a href="#section-10-2" class="pilcrow">¶</a></p>
+<p id="section-10-3">An advantage signal is not an authorization credential and does not
+establish AI use or intent. A service-class claim does not reserve
+physical capacity unless the deployment separately provides such a
+service. This document does not change MoQT or QUIC security properties,
+and its examples do not authorize disclosure of subscriber identity or
+cross-operator reputation records.<a href="#section-10-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-11">
+      <h2 id="name-iana-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-11-1">This document has no IANA actions.<a href="#section-11-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-12">
+      <h2 id="name-informative-references">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+      </h2>
+<dl class="references">
+<dt id="AIPrefRealtime">[AIPrefRealtime]</dt>
+      <dd>
+<span class="refAuthor">Bisht, A.</span>, <span class="refTitle">"AI Preferences for Real-Time Protocol Bindings"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-altanai-aipref-realtime-protocol-bindings-01</span>, <time datetime="2026-08-04" class="refDate">4 August 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-altanai-aipref-realtime-protocol-bindings-01">https://datatracker.ietf.org/doc/html/draft-altanai-aipref-realtime-protocol-bindings-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="C4M">[C4M]</dt>
+      <dd>
+<span class="refAuthor">Lemmons, C.</span>, <span class="refAuthor">Simon, G.</span>, <span class="refAuthor">Nandakumar, S.</span>, and <span class="refAuthor">W. Law</span>, <span class="refTitle">"Authorization scheme for MOQT using Common Access Tokens"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-moq-c4m-02</span>, <time datetime="2026-11-02" class="refDate">2 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-moq-c4m-02">https://datatracker.ietf.org/doc/html/draft-ietf-moq-c4m-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MoQMetrics">[MoQMetrics]</dt>
+      <dd>
+<span class="refAuthor">Jennings, C. F.</span> and <span class="refAuthor">S. Nandakumar</span>, <span class="refTitle">"Metrics over MOQT"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-jennings-moq-metrics-03</span>, <time datetime="2026-11-02" class="refDate">2 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-jennings-moq-metrics-03">https://datatracker.ietf.org/doc/html/draft-jennings-moq-metrics-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MoQTransport">[MoQTransport]</dt>
+      <dd>
+<span class="refAuthor">Nandakumar, S.</span>, <span class="refAuthor">Vasiliev, V.</span>, <span class="refAuthor">Swett, I.</span>, and <span class="refAuthor">A. Frindell</span>, <span class="refTitle">"Media over QUIC Transport"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-moq-transport-23</span>, <time datetime="2026-11-02" class="refDate">2 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-moq-transport-23">https://datatracker.ietf.org/doc/html/draft-ietf-moq-transport-23</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="PrivacyPass">[PrivacyPass]</dt>
+      <dd>
+<span class="refAuthor">Nandakumar, S.</span>, <span class="refAuthor">Jennings, C. F.</span>, and <span class="refAuthor">T. Meunier</span>, <span class="refTitle">"Privacy Pass Authentication for Media over QUIC (MoQ)"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-moq-privacy-pass-auth-04</span>, <time datetime="2026-11-01" class="refDate">1 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-moq-privacy-pass-auth-04">https://datatracker.ietf.org/doc/html/draft-ietf-moq-privacy-pass-auth-04</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RelayDoS">[RelayDoS]</dt>
+      <dd>
+<span class="refAuthor">English, M.</span>, <span class="refAuthor">Pardue, L.</span>, <span class="refAuthor">Sharma, A.</span>, and <span class="refAuthor">I. Swett</span>, <span class="refTitle">"Denial-of-Service Considerations for Media over QUIC Relay Deployments"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-englishm-moq-relay-dos-02</span>, <time datetime="2026-11-02" class="refDate">2 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-englishm-moq-relay-dos-02">https://datatracker.ietf.org/doc/html/draft-englishm-moq-relay-dos-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC4412">[RFC4412]</dt>
+      <dd>
+<span class="refAuthor">Schulzrinne, H.</span> and <span class="refAuthor">J. Polk</span>, <span class="refTitle">"Communications Resource Priority for the Session Initiation Protocol (SIP)"</span>, <span class="seriesInfo">RFC 4412</span>, <span class="seriesInfo">DOI 10.17487/RFC4412</span>, <time datetime="2006-02" class="refDate">February 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4412">https://www.rfc-editor.org/rfc/rfc4412</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6357">[RFC6357]</dt>
+      <dd>
+<span class="refAuthor">Hilt, V.</span>, <span class="refAuthor">Noel, E.</span>, <span class="refAuthor">Shen, C.</span>, and <span class="refAuthor">A. Abdelal</span>, <span class="refTitle">"Design Considerations for Session Initiation Protocol (SIP) Overload Control"</span>, <span class="seriesInfo">RFC 6357</span>, <span class="seriesInfo">DOI 10.17487/RFC6357</span>, <time datetime="2011-08" class="refDate">August 2011</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6357">https://www.rfc-editor.org/rfc/rfc6357</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6973">[RFC6973]</dt>
+      <dd>
+<span class="refAuthor">Cooper, A.</span>, <span class="refAuthor">Tschofenig, H.</span>, <span class="refAuthor">Aboba, B.</span>, <span class="refAuthor">Peterson, J.</span>, <span class="refAuthor">Morris, J.</span>, <span class="refAuthor">Hansen, M.</span>, and <span class="refAuthor">R. Smith</span>, <span class="refTitle">"Privacy Considerations for Internet Protocols"</span>, <span class="seriesInfo">RFC 6973</span>, <span class="seriesInfo">DOI 10.17487/RFC6973</span>, <time datetime="2013-07" class="refDate">July 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6973">https://www.rfc-editor.org/rfc/rfc6973</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7339">[RFC7339]</dt>
+      <dd>
+<span class="refAuthor">Gurbani, V., Ed.</span>, <span class="refAuthor">Hilt, V.</span>, and <span class="refAuthor">H. Schulzrinne</span>, <span class="refTitle">"Session Initiation Protocol (SIP) Overload Control"</span>, <span class="seriesInfo">RFC 7339</span>, <span class="seriesInfo">DOI 10.17487/RFC7339</span>, <time datetime="2014-09" class="refDate">September 2014</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7339">https://www.rfc-editor.org/rfc/rfc7339</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7415">[RFC7415]</dt>
+      <dd>
+<span class="refAuthor">Noel, E.</span> and <span class="refAuthor">P. Williams</span>, <span class="refTitle">"Session Initiation Protocol (SIP) Rate Control"</span>, <span class="seriesInfo">RFC 7415</span>, <span class="seriesInfo">DOI 10.17487/RFC7415</span>, <time datetime="2015-02" class="refDate">February 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7415">https://www.rfc-editor.org/rfc/rfc7415</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8836">[RFC8836]</dt>
+      <dd>
+<span class="refAuthor">Jesup, R.</span> and <span class="refAuthor">Z. Sarker, Ed.</span>, <span class="refTitle">"Congestion Control Requirements for Interactive Real-Time Media"</span>, <span class="seriesInfo">RFC 8836</span>, <span class="seriesInfo">DOI 10.17487/RFC8836</span>, <time datetime="2021-01" class="refDate">January 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8836">https://www.rfc-editor.org/rfc/rfc8836</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8888">[RFC8888]</dt>
+      <dd>
+<span class="refAuthor">Sarker, Z.</span>, <span class="refAuthor">Perkins, C.</span>, <span class="refAuthor">Singh, V.</span>, and <span class="refAuthor">M. Ramalho</span>, <span class="refTitle">"RTP Control Protocol (RTCP) Feedback for Congestion Control"</span>, <span class="seriesInfo">RFC 8888</span>, <span class="seriesInfo">DOI 10.17487/RFC8888</span>, <time datetime="2021-01" class="refDate">January 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8888">https://www.rfc-editor.org/rfc/rfc8888</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9000">[RFC9000]</dt>
+    <dd>
+<span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">M. Thomson, Ed.</span>, <span class="refTitle">"QUIC: A UDP-Based Multiplexed and Secure Transport"</span>, <span class="seriesInfo">RFC 9000</span>, <span class="seriesInfo">DOI 10.17487/RFC9000</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9000">https://www.rfc-editor.org/rfc/rfc9000</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-A">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Altanai Bisht</span></div>
+<div dir="auto" class="left"><span class="org">Cisco</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:altanai@outlook.com" class="email">altanai@outlook.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
